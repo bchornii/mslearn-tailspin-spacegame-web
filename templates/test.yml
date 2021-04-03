@@ -1,0 +1,40 @@
+parameters:
+  buildConfiguration: 'Release'
+  
+steps:
+# Installs tools listed in the manifest file, dotnet-tools.json
+- task: DotNetCoreCLI@2
+  displayName: 'Install .Net Core tools from local manifest'
+  inputs:
+    command: custom
+    custom: tool
+    arguments: 'restore'
+
+# Runs unit tests and also collects code coverage in Cobertura format.
+# Notice that this task does not specify the --logger trx argument. 
+# The publishTestResults argument adds that for you. This argument tells the 
+# pipeline to generate the TRX file to a temporary directory, accessible 
+# through the $(Agent.TempDirectory) built-in variable. It also publishes the 
+# task results to the pipeline.
+- task: DotNetCoreCLI@2
+  displayName: 'Run unit tests - ${{ parameters.buildConfiguration }}'
+  inputs:
+    command: 'test'
+    arguments: '--no-build --configuration ${{ parameters.buildConfiguration }} /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura /p:CoverletOutput=$(Build.SourcesDirectory)/TestResults/Coverage/'
+    publishTestResults: true
+    projects: '**/*.Tests.csproj'
+
+# Converts Cobertura output to HTML
+- task: DotNetCoreCLI@2
+  displayName: 'Create code coverage report'
+  inputs:
+    command: custom
+    custom: tool
+    arguments: 'run reportgenerator -reports:$(Build.SourcesDirectory)/**/coverage.cobertura.xml -targetdir:$(Build.SourcesDirectory)/CodeCoverage -reporttypes:HtmlInline_AzurePipelines'
+
+# Publishes the report to the pipeline
+- task: PublishCodeCoverageResults@1
+  displayName: 'Publish code coverage report'
+  inputs:
+    codeCoverageTool: 'cobertura'
+    summaryFileLocation: '$(Build.SourcesDirectory)/**/coverage.cobertura.xml'
