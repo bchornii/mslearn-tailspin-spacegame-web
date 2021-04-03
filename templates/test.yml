@@ -23,7 +23,6 @@ steps:
     arguments: '--no-build --configuration ${{ parameters.buildConfiguration }} /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura /p:CoverletOutput=$(Build.SourcesDirectory)/TestResults/Coverage/'
     publishTestResults: true
     projects: '**/*.Tests.csproj'
-
 # Converts Cobertura output to HTML
 # - task: DotNetCoreCLI@2
 #   displayName: 'Create code coverage report'
