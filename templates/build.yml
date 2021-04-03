@@ -9,7 +9,7 @@ steps:
     arguments: '--no-restore --configuration ${{ parameters.buildConfiguration }}'
     projects: '**/*.csproj'
 
-- template: templates/test.yml
+- template: test.yml
   parameters:
     buildConfiguration: 'Release'
 
