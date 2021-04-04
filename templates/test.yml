@@ -21,7 +21,7 @@ steps:
   inputs:
     command: 'test'
     arguments: '--no-build --configuration ${{ parameters.buildConfiguration }} /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura /p:CoverletOutput=$(Build.SourcesDirectory)/TestResults/Coverage/'
-    publishTestResults: true
+    publishTestResults: true        # default
     projects: '**/*.Tests.csproj'
 
 # Converts Cobertura output to HTML
