@@ -11,7 +11,7 @@ steps:
 
 - template: test.yml
   parameters:
-    buildConfiguration: 'Release'
+    buildConfiguration: '${{ parameters.buildConfiguration }}'
 
 # publish, or package, the app's build results (including its dependencies) into a folder. 
 # zipAfterPublish argument specifies to add the built results to a .zip file.
