@@ -20,8 +20,8 @@ steps:
   inputs:
     command: 'publish'
     projects: |
-      '**/*.csproj'
-      !'**/*.Test.csproj'
+      **/*.csproj
+      !**/*.Test.csproj
     publishWebProjects: false
     arguments: '--no-build --configuration ${{ parameters.buildConfiguration }} --output $(Build.ArtifactStagingDirectory)/${{ parameters.buildConfiguration }}'
     zipAfterPublish: true
