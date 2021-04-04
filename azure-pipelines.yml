@@ -77,11 +77,11 @@ steps:
     codeCoverageEnabled: true        
     configuration: '$(buildConfiguration)'
 
-- task: PublishTestResults@2
-  inputs:
-    testResultsFormat: 'VSTest'
-    testResultsFiles: '$(Agent.TempDirectory)/TestResults/**/*.trx'
-    mergeTestResults: true        
+# - task: PublishTestResults@2
+#   inputs:
+#     testResultsFormat: 'VSTest'
+#     testResultsFiles: '$(Agent.TempDirectory)/TestResults/**/*.trx'
+#     mergeTestResults: true        
 
 - task: PublishCodeCoverageResults@1
   inputs:
