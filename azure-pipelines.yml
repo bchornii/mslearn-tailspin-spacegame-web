@@ -80,13 +80,13 @@ steps:
 - task: PublishTestResults@2
   inputs:
     testResultsFormat: 'VSTest'
-    testResultsFiles: '$(Agent.TempDirectory)/TestResults/**/*.trx'
+    testResultsFiles: '$(Agent.TempDirectory)/**/*.trx'
     mergeTestResults: true        
 
 - task: PublishCodeCoverageResults@1
   inputs:
     codeCoverageTool: 'Cobertura'
-    summaryFileLocation: '$(Agent.TempDirectory)/TestResults/**/*.coverage'   
+    summaryFileLocation: '$(Agent.TempDirectory)/**/*.coverage'   
 
 #################################################################################################################################
 
