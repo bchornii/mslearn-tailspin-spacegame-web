@@ -64,6 +64,14 @@ steps:
 #   parameters:
 #     buildConfiguration: '${{ parameters.buildConfiguration }}'
 
+# Installs tools listed in the manifest file, dotnet-tools.json
+- task: DotNetCoreCLI@2
+  displayName: 'Install .Net Core tools from local manifest'
+  inputs:
+    command: custom
+    custom: tool
+    arguments: 'restore'
+
 - task: VSTest@2
   displayName: 'Running VStest'
   inputs:
@@ -87,6 +95,15 @@ steps:
 #   inputs:
 #     codeCoverageTool: 'Cobertura'
 #     summaryFileLocation: '$(Agent.TempDirectory)/TestResults/**/*.coverage'   
+
+# Converts Cobertura output to HTML
+- task: DotNetCoreCLI@2
+  displayName: 'Create code coverage report'
+  inputs:
+    command: custom
+    custom: tool
+    arguments: 'run reportgenerator -reports:$(Agent.TempDirectory)/TestResults/**/*.coverage -targetdir:$(Build.SourcesDirectory)/CodeCoverage -reporttypes:HtmlInline_AzurePipelines'
+
 
 #################################################################################################################################
 
