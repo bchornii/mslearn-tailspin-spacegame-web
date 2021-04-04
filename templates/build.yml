@@ -9,9 +9,9 @@ steps:
     arguments: '--no-restore --configuration ${{ parameters.buildConfiguration }}'
     projects: '**/*.csproj'
 
-# - template: test.yml
-#   parameters:
-#     buildConfiguration: 'Release'
+- template: test.yml
+  parameters:
+    buildConfiguration: 'Release'
 
 # publish, or package, the app's build results (including its dependencies) into a folder. 
 # zipAfterPublish argument specifies to add the built results to a .zip file.
