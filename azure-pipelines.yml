@@ -40,13 +40,11 @@ jobs:
       displayName: 'Write build info'
       workingDirectory: $(wwwrootDir)
     
-    - task: NuGetCommand@2
+    - task: DotNetCoreCLI@2
       displayName: 'Restore project dependencies'
       inputs:
         command: 'restore'
-        restoreSolution: '**/*.sln'
-        feedsToUse: 'select'
-        vstsFeed: 'Space Game - web - Tests/Tailspin.SpaceGame.Web.Models'
+        projects: '**/*.csproj'
     
     # - template: templates/build.yml
     #   parameters:
