@@ -9,8 +9,6 @@ steps:
     command: custom
     custom: tool
     arguments: 'restore'
-    feedsToUse: 'config'
-    nugetConfigPath: 'nuget.config'
 
 # Runs unit tests and also collects code coverage in Cobertura format.
 # Notice that this task does not specify the --logger trx argument. 
