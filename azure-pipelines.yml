@@ -38,14 +38,16 @@ jobs:
     
     - script: 'echo "$(Build.DefinitionName), $(Build.BuildId), $(Build.BuildNumber)" > buildinfo.txt'
       displayName: 'Write build info'
-      workingDirectory: $(wwwrootDir)
+      workingDirectory: $(wwwrootDir)    
     
-    - task: DotNetCoreCLI@2
-      displayName: 'Restore project dependencies'
+    - task: NuGetCommand@2
+      displayName: Nuget restore FN.Merlin.SubjectProperty.API
       inputs:
         command: 'restore'
-        projects: '**/*.csproj'
-    
+        restoreSolution: 'Service/FN.Merlin.SubjectProperty/FN.Merlin.SubjectProperty.sln'
+        feedsToUse: 'config'
+        nugetConfigPath: 'nuget.config'
+
     # - template: templates/build.yml
     #   parameters:
     #     buildConfiguration: 'Debug'
