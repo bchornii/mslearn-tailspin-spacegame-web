@@ -38,13 +38,13 @@ jobs:
     
     - script: 'echo "$(Build.DefinitionName), $(Build.BuildId), $(Build.BuildNumber)" > buildinfo.txt'
       displayName: 'Write build info'
-      workingDirectory: $(wwwrootDir)    
+      workingDirectory: $(wwwrootDir)
     
     - task: NuGetCommand@2
       displayName: Nuget restore FN.Merlin.SubjectProperty.API
       inputs:
         command: 'restore'
-        restoreSolution: 'Service/FN.Merlin.SubjectProperty/FN.Merlin.SubjectProperty.sln'
+        restoreSolution: '**/*.sln'
         feedsToUse: 'config'
         nugetConfigPath: 'nuget.config'
 
