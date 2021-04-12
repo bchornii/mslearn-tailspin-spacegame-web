@@ -46,6 +46,14 @@ jobs:
         command: 'restore'
         projects: '**/*.csproj'
     
+    - task: NuGetCommand@2
+      displayName: 'Restore project dependencies'
+      inputs:
+        command: 'restore'
+        restoreSolution: '**/*.sln'
+        feedsToUse: 'select'
+        vstsFeed: 'Space Game - web - Tests/Tailspin.SpaceGame.Web.Models'
+    
     # - template: templates/build.yml
     #   parameters:
     #     buildConfiguration: 'Debug'
