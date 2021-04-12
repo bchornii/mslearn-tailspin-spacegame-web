@@ -40,14 +40,14 @@ jobs:
       displayName: 'Write build info'
       workingDirectory: $(wwwrootDir)
     
-    - task: NuGetCommand@2
-      displayName: Nuget restore FN.Merlin.SubjectProperty.API
+    - task: DotNetCoreCLI@2
+      displayName: 'Restore project dependencies'
       inputs:
         command: 'restore'
-        restoreSolution: '**/*.sln'
+        projects: '**/*.csproj'
         feedsToUse: 'config'
         nugetConfigPath: 'nuget.config'
-
+    
     # - template: templates/build.yml
     #   parameters:
     #     buildConfiguration: 'Debug'
