@@ -25,6 +25,8 @@ jobs:
         packageType: sdk
         version: '$(dotnetSdkVersion)'
     
+    - task: NuGetAuthenticate@0
+
     - task: DotNetCoreCLI@2
       displayName: 'Restore project dependencies'
       inputs:
