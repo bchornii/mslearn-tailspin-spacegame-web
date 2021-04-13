@@ -40,6 +40,8 @@ jobs:
       displayName: 'Write build info'
       workingDirectory: $(wwwrootDir)
     
+    - task: NuGetAuthenticate@0
+
     - task: DotNetCoreCLI@2
       displayName: 'Restore project dependencies'
       inputs:
