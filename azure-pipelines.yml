@@ -13,6 +13,7 @@ pool:
 
 variables:
   buildConfiguration: 'Release'
+  releaseBranchName: 'release'
   wwwrootDir: 'Tailspin.SpaceGame.Web/wwwroot'
   dotnetSdkVersion: '3.1.300' 
 
@@ -66,9 +67,15 @@ stages:
         displayName: 'Publish Artifacts: drop'
         condition: succeeded() # run the task only when the previous task succeeds
 
-- stage: 'Deploy'
+- stage: 'Dev'
   displayName: 'Deploy the web application'
   dependsOn: Build
+  condition: |
+    and
+    (
+      succeeded(),
+      eq(variables['Build.SourceBranchName'], variables['releaseBranchName'])
+    )
   jobs:
   - deployment: Deploy
     pool:
@@ -86,5 +93,5 @@ stages:
             displayName: 'Azure App Service Deploy: website'
             inputs:
               azureSubscription: 'Resource Manager - Tailspin - Space Game'
-              appName: '$(WebAppName)'
+              appName: '$(WebAppNameDev)'
               package: '$(Pipeline.Workspace)/drop/$(buildConfiguration)/*.zip'
