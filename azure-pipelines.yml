@@ -160,7 +160,7 @@ stages:
 
 - stage: 'Staging'
   displayName: 'Deploy to the staging environment'
-  dependsOn: Build #Dev
+  dependsOn: Dev
   jobs:
   - deployment: Deploy
     pool:
