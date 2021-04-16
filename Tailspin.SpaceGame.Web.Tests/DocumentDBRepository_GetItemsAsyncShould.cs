@@ -11,25 +11,22 @@ namespace Tests
 {
     public class DocumentDBRepository_GetItemsAsyncShould
     {
-        private IDocumentDBRepository<Score> _scoreRepository;
+        private IDocumentDBRepository _scoreRepository;
 
         [SetUp]
         public void Setup()
         {
-            using (Stream scoresData = typeof(IDocumentDBRepository<Score>)
-                .Assembly
-                .GetManifestResourceStream("Tailspin.SpaceGame.Web.SampleData.scores.json"))
-            {
-                _scoreRepository = new LocalDocumentDBRepository<Score>(scoresData);
-            }
+            _scoreRepository = new LocalDocumentDBRepository(
+                "SampleData/scores.json", 
+                "SampleData/profiles.json");
         }
 
-        [TestCase("Milky Way")]
-        [TestCase("Andromeda")]
-        [TestCase("Pinwheel")]
-        [TestCase("NGC 1300")]
-        [TestCase("Messier 82")]
-        public void FetchOnlyRequestedGameRegion(string gameRegion)
+        [TestCase("Solo", "Milky Way")]
+        [TestCase("Solo", "Andromeda")]
+        [TestCase("Solo", "Pinwheel")]
+        [TestCase("Trio", "NGC 1300")]
+        [TestCase("Duo", "Messier 82")]
+        public void FetchOnlyRequestedGameRegion(string mode, string gameRegion)
         {
             const int PAGE = 0; // take the first page of results
             const int MAX_RESULTS = 10; // sample up to 10 results
@@ -39,9 +36,9 @@ namespace Tests
             Expression<Func<Score, bool>> queryPredicate = score => (score.GameRegion == gameRegion);
 
             // Fetch the scores.
-            Task<IEnumerable<Score>> scoresTask = _scoreRepository.GetItemsAsync(
-                queryPredicate, // the predicate defined above
-                score => 1, // we don't care about the order
+            Task<IEnumerable<Score>> scoresTask = _scoreRepository.GetScoresAsync(
+                mode, // the predicate defined above
+                gameRegion, // we don't care about the order
                 PAGE,
                 MAX_RESULTS
             );
