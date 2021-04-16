@@ -68,16 +68,109 @@ stages:
       
       - template: templates/build.yml
         parameters:
-          buildConfiguration: 'Release'
+          buildConfiguration: $(buildConfiguration)
       
       # publish the .zip file to Azure Pipelines
       - task: PublishBuildArtifacts@1
         displayName: 'Publish Artifacts: drop'
         condition: succeeded() # run the task only when the previous task succeeds
 
+    - job: BuildDacpac
+      pool:
+        vmImage: 'windows-2019'
+      steps:
+      - task: VSBuild@1
+        displayName: 'Build the database project'
+        inputs:
+          project: '**/*.sqlproj'
+          configuration: $(buildConfiguration)
+
+      - task: CopyFiles@2
+        displayName: 'Copy dacpac file to staging directory'
+        inputs:
+          contents: |
+            Tailspin.SpaceGame.Database/bin/$(buildConfiguration)/*.dacpac
+          targetFolder: '$(Build.StagingDirectory)'
+
+      - task: PublishBuildArtifacts@1
+        displayName: 'Publish Artifact'
+        inputs:
+          pathToPublish: '$(Build.ArtifactStagingDirectory)'  # default value
+          artifactName: dropDacpac
+        condition: succeededOrFailed()
+
+- stage: DBAVerificationScript
+  displayName: 'Script database schema changes'
+  dependsOn: Build
+  jobs:
+  - deployment: DBAVerificationScript
+    pool:
+      vmImage: 'windows-2019'
+    variables:
+    - group: 'Release'
+    environment: 'dbaverificationscript'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current         # download artifacts produced by the current pipeline run. Options: current, specific. 
+            artifact: dropDacpac      # by default, files are downloaded to $(Pipeline.Workspace)
+            patterns: '**/*'          # artifact: the name of the artifact to download
+          - task: SqlAzureDacpacDeployment@1
+            displayName: Generate schema change script
+            inputs:
+              azureSubscription: 'Resource Manager - Tailspin - Space Game'
+              authenticationType: 'server'
+              serverName: '$(servername).database.windows.net'
+              databaseName: '$(databasename)'
+              sqlUsername: '$(adminlogin)'
+              sqlPassword: '$(adminPassword)'
+              deployType: 'DacpacTask'
+              deploymentAction: 'Script'
+              dacpacFile: '$(Pipeline.Workspace)/dropDacpac/Tailspin.SpaceGame.Database/bin/$(buildConfiguration)/Tailspin.SpaceGame.Database.dacpac'
+              ipDetectionMethod: 'AutoDetect'
+          - task: PowerShell@2
+            displayName: Show Auto Generated SQL Script
+            inputs:
+              targetType: 'inline'
+              script: | 
+                Write-Host "Auto Generated SQL Update Script:"
+                Get-Content d:\a\1\s\GeneratedOutputFiles\$(databasename)_Script.sql | foreach {Write-Output $_}
+
+- stage: DBAVerificationApply
+  displayName: 'Apply database schema changes'
+  dependsOn: DBAVerificationScript
+  jobs:
+  - deployment: DBAVerificationApply
+    pool:
+      vmImage: 'windows-2019'
+    variables:
+    - group: 'Release'
+    environment: 'dbaverificationapply'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current
+            artifact: dropDacpac
+            patterns: '**/*'
+          - task: SqlAzureDacpacDeployment@1
+            displayName: 'Deploy SQL schema'
+            inputs:
+              azureSubscription: 'Resource Manager - Tailspin - Space Game'
+              authenticationType: 'server'
+              serverName: '$(servername).database.windows.net'
+              databaseName: '$(databasename)'
+              sqlUsername: '$(adminlogin)'
+              sqlPassword: '$(adminPassword)'
+              deployType: 'DacpacTask'
+              deploymentAction: 'Publish'
+              dacpacFile: '$(Pipeline.Workspace)/dropDacpac/Tailspin.SpaceGame.Database/bin/$(buildConfiguration)/Tailspin.SpaceGame.Database.dacpac'
+              ipDetectionMethod: 'AutoDetect'
+
 - stage: 'Dev'
   displayName: 'Deploy the web application'
-  dependsOn: Build
+  dependsOn: DBAVerificationApply
   condition: |  # run the stage only when the previous stage succeeds and the current branch is release
     and
     (

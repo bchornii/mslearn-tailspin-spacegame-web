@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <ProjectGuid>{A0C4E31E-AC75-4F39-9F59-0AA19D9B8F46}</ProjectGuid>
+    <UserSecretsId>61842e04-c447-4016-b9df-07e0bda29bc2</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -10,6 +11,7 @@
     <!-- <PackageReference Include="Microsoft.AspNetCore.Razor.Design" Version="2.1.2" PrivateAssets="All" /> -->
     <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />
     <PackageReference Include="Tailspin.SpaceGame.Web.Models" Version="2.0.0-CI-20210412-052221" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="1.1.0" />
   </ItemGroup>
 
   <ItemGroup>
