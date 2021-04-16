@@ -79,6 +79,22 @@ stages:
       pool:
         vmImage: 'windows-2019'
       steps:
+      - task: UseDotNet@2
+        displayName: 'Use .NET Core $(dotnetSdkVersion)'
+        inputs:
+          packageType: sdk
+          version: '$(dotnetSdkVersion)'
+
+      - task: NuGetAuthenticate@0
+
+      - task: DotNetCoreCLI@2
+        displayName: 'Restore project dependencies'
+        inputs:
+          command: 'restore'
+          projects: '**/*.csproj'
+          feedsToUse: 'config'
+          nugetConfigPath: 'nuget.config'
+
       - task: VSBuild@1
         displayName: 'Build the database project'
         inputs:
