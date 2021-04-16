@@ -129,7 +129,7 @@ stages:
               package: '$(Pipeline.Workspace)/drop/$(buildConfiguration)/*.zip'
   - job: RunUITests
     dependsOn: Deploy
-    condition: succeeded()  # run the stage only when the previous stage succeeds
+    condition: succeeded()  # run the job only when the previous job succeeds
     displayName: 'Run UI tests'
     pool:
       vmImage: 'windows-2019'
@@ -140,12 +140,16 @@ stages:
       displayName: 'Use .NET Core SDK $(dotnetSdkVersion)'
       inputs:
         version: '$(dotnetSdkVersion)'
+        
+    - task: NuGetAuthenticate@0
+
     - task: DotNetCoreCLI@2
       displayName: 'Build the project - $(buildConfiguration)'
       inputs:
         command: 'build'
         arguments: '--configuration $(buildConfiguration)'
         projects: '$(System.DefaultWorkingDirectory)/**/*UITests.csproj'
+
     - task: DotNetCoreCLI@2
       displayName: 'Run unit tests - $(buildConfiguration)'
       inputs:
