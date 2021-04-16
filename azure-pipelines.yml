@@ -86,6 +86,8 @@ stages:
         inputs:
           command: 'restore'
           projects: '**/*.csproj'
+          feedsToUse: 'config'
+          nugetConfigPath: 'nuget.config'
 
       - task: VSBuild@1
         displayName: 'Build the database project'
