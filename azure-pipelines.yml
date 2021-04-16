@@ -78,12 +78,12 @@ stages:
 - stage: 'Dev'
   displayName: 'Deploy the web application'
   dependsOn: Build
-  #condition: |  # run the stage only when the previous stage succeeds and the current branch is release
-  #  and
-  #  (
-  #    succeeded(),
-  #    eq(variables['Build.SourceBranchName'], variables['releaseBranchName'])
-  #  )
+  condition: |  # run the stage only when the previous stage succeeds and the current branch is release
+    and
+    (
+      succeeded(),
+      eq(variables['Build.SourceBranchName'], variables['releaseBranchName'])
+    )
   jobs:
   - deployment: Deploy
     pool:
@@ -107,7 +107,7 @@ stages:
 - stage: 'Test'
   displayName: 'Deploy to the test environment'
   dependsOn: Dev
-  #condition: eq(variables['Build.Reason'], 'Schedule')
+  condition: eq(variables['Build.Reason'], 'Schedule')
   jobs:
   - deployment: Deploy
     pool:
@@ -140,7 +140,7 @@ stages:
       displayName: 'Use .NET Core SDK $(dotnetSdkVersion)'
       inputs:
         version: '$(dotnetSdkVersion)'
-        
+
     - task: NuGetAuthenticate@0
 
     - task: DotNetCoreCLI@2
