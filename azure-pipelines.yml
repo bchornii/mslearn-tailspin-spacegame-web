@@ -79,6 +79,15 @@ stages:
       pool:
         vmImage: 'windows-2019'
       steps:
+
+    - task: NuGetAuthenticate@0
+
+    - task: DotNetCoreCLI@2
+      displayName: 'Restore project dependencies'
+      inputs:
+        command: 'restore'
+        projects: '**/*.csproj'
+
       - task: VSBuild@1
         displayName: 'Build the database project'
         inputs:
@@ -99,6 +108,7 @@ stages:
           artifactName: dropDacpac
         condition: succeededOrFailed()
 
+  # read the dacpac file and create a change script for the database; ps script writes out that change script
 - stage: DBAVerificationScript
   displayName: 'Script database schema changes'
   dependsOn: Build
@@ -136,7 +146,8 @@ stages:
               script: | 
                 Write-Host "Auto Generated SQL Update Script:"
                 Get-Content d:\a\1\s\GeneratedOutputFiles\$(databasename)_Script.sql | foreach {Write-Output $_}
-
+  
+  # reads the auto-generated file and applies the change script to the database.
 - stage: DBAVerificationApply
   displayName: 'Apply database schema changes'
   dependsOn: DBAVerificationScript
