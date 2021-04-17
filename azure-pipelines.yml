@@ -119,12 +119,12 @@ stages:
 - stage: DBAVerificationScript
   displayName: 'Script database schema changes'
   dependsOn: Build
-  condition: |  # run the stage only when the previous stage succeeds and the current branch is release
-    and
-    (
-      succeeded(),
-      eq(variables['Build.SourceBranchName'], variables['releaseBranchName'])
-    )
+  #condition: |  # run the stage only when the previous stage succeeds and the current branch is release
+  #  and
+  #  (
+  #    succeeded(),
+  #    eq(variables['Build.SourceBranchName'], variables['releaseBranchName'])
+  #  )
   jobs:
   - deployment: DBAVerificationScript
     pool:
@@ -138,7 +138,7 @@ stages:
           steps:
           - download: current         # download artifacts produced by the current pipeline run. Options: current, specific. 
             artifact: dropDacpac      # by default, files are downloaded to $(Pipeline.Workspace)
-            patterns: '**/*'          # artifact: the name of the artifact to download
+            patterns: '**/*'          # artifact: the name of the artifact to download; patterns: limits which files get downloaded
           - task: SqlAzureDacpacDeployment@1
             displayName: Generate schema change script
             inputs:
