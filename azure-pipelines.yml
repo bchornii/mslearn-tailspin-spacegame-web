@@ -52,6 +52,7 @@ stages:
   # )
   jobs:
   - deployment: DBAVerificationScript
+    displayName: 'DBA Verification Script Job'
     pool:
       vmImage: 'windows-2019'
     variables:
@@ -80,6 +81,7 @@ stages:
     )
   jobs:
   - deployment: DBAVerificationApply
+    displayName: 'DBA Verification Apply Job'
     pool:
       vmImage: 'windows-2019'
     variables:
@@ -109,6 +111,7 @@ stages:
     )
   jobs:
   - deployment: Deploy
+    displayName: 'Deploy into Dev Job'
     pool:
       vmImage: 'ubuntu-18.04'
     environment: dev
@@ -133,6 +136,7 @@ stages:
   condition: eq(variables['Build.Reason'], 'Schedule')
   jobs:
   - deployment: Deploy
+    displayName: 'Deploy into Test'
     pool:
       vmImage: 'ubuntu-18.04'
     environment: test
@@ -148,6 +152,7 @@ stages:
               webAppName: $(WebAppNameTest)
 
   - job: RunUITests
+    displayName: 'Run UI Tests Job'
     dependsOn: Deploy
     condition: succeeded()  # run the job only when the previous job succeeds    
     pool:
@@ -169,6 +174,7 @@ stages:
   dependsOn: Dev
   jobs:
   - deployment: Deploy
+    displayName: 'Deploy into Staging Job'
     pool:
       vmImage: 'ubuntu-18.04'
     environment: staging
@@ -184,6 +190,7 @@ stages:
               webAppName: $(WebAppNameStaging)
 
   - job: RunLoadTests
+    displayName: 'Run Load Tests Job'
     dependsOn: Deploy    
     condition: succeeded()  # run the job only when the previous job succeeds
     pool:
