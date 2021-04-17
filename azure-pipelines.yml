@@ -38,12 +38,12 @@ stages:
 - stage: DBAVerificationScript
   displayName: 'Script database schema changes'
   dependsOn: Build
-  condition: |  # run the stage only when the previous stage succeeds and the current branch is release
-   and
-   (
-     succeeded(),
-     eq(variables['Build.SourceBranchName'], variables['releaseBranchName'])
-   )
+  #condition: |  # run the stage only when the previous stage succeeds and the current branch is release
+  # and
+  # (
+  #   succeeded(),
+  #   eq(variables['Build.SourceBranchName'], variables['releaseBranchName'])
+  # )
   jobs:
   - deployment: DBAVerificationScript
     pool:
