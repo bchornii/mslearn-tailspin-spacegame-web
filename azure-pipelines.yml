@@ -21,6 +21,9 @@ schedules:
   always: "false"
 
 stages:
+###
+### Build Stage
+###
 - stage: 'Build'
   displayName: 'Build the web application'
   pool:
@@ -28,13 +31,16 @@ stages:
     demands:
     - npm
   jobs:
-  - template: scripts/jobs/build/build-jobs.yml
+  - template: scripts/build/build-jobs.yml
     parameters:
       wwwrootDir: $(wwwrootDir)
       dotnetSdkVersion: $(dotnetSdkVersion)
       buildConfiguration: $(buildConfiguration)
 
-# read the dacpac file and create a change script for the database; ps script writes out that change script
+###
+### Dba Verification Stage
+### Note: reads the .dacpac file and create a change script for the database; ps script writes it to output
+###
 - stage: DBAVerificationScript
   displayName: 'Script database schema changes'
   dependsOn: Build
@@ -55,11 +61,14 @@ stages:
       runOnce:
         deploy:
           steps:
-          - template: scripts/jobs/db/dba_verify-steps.yml
+          - template: scripts/db/dba_verify-steps.yml
             parameters:
               buildConfiguration: $(buildConfiguration)
 
-# reads the auto-generated file and applies the change script to the database.
+###
+### Dba Verification Apply Stage
+### Note: reads the auto-generated file and applies the change script to the database.
+###
 - stage: DBAVerificationApply
   displayName: 'Apply database schema changes'
   dependsOn: DBAVerificationScript
@@ -80,10 +89,13 @@ stages:
       runOnce:
         deploy:
           steps:
-          - template: scripts/jobs/db/dba_apply-steps.yml
+          - template: scripts/db/dba_apply-steps.yml
             parameters:
               buildConfiguration: $(buildConfiguration)
 
+###
+### Dev deployment
+###
 - stage: 'Dev'
   displayName: 'Deploy the web application'
   dependsOn:
@@ -106,15 +118,15 @@ stages:
       runOnce:
         deploy:
           steps:
-          - download: current
-            artifact: drop
-          - task: AzureWebApp@1
-            displayName: 'Azure App Service Deploy: website'
-            inputs:
-              azureSubscription: 'Resource Manager - Tailspin - Space Game'
-              appName: '$(WebAppNameDev)'
-              package: '$(Pipeline.Workspace)/drop/$(buildConfiguration)/*.zip'
+          - template: scripts/deploy/deploy-steps.yml
+            parameters:
+              buildConfiguration: $(buildConfiguration)
+              webAppName: $(WebAppNameDev)
 
+###
+### Test deployment
+### Note: add separate job runs UI tests.
+###
 - stage: 'Test'
   displayName: 'Deploy to the test environment'
   dependsOn: Dev
@@ -130,45 +142,28 @@ stages:
       runOnce:
         deploy:
           steps:
-          - download: current
-            artifact: drop
-          - task: AzureWebApp@1
-            displayName: 'Azure App Service Deploy: website'
-            inputs:
-              azureSubscription: 'Resource Manager - Tailspin - Space Game'
-              appName: '$(WebAppNameTest)'
-              package: '$(Pipeline.Workspace)/drop/$(buildConfiguration)/*.zip'
+          - template: scripts/deploy/deploy-steps.yml
+            parameters:
+              buildConfiguration: $(buildConfiguration)
+              webAppName: $(WebAppNameTest)
+
   - job: RunUITests
     dependsOn: Deploy
-    condition: succeeded()  # run the job only when the previous job succeeds
-    displayName: 'Run UI tests'
+    condition: succeeded()  # run the job only when the previous job succeeds    
     pool:
       vmImage: 'windows-2019'
     variables:
     - group: 'Release'
     steps: 
-    - task: UseDotNet@2
-      displayName: 'Use .NET Core SDK $(dotnetSdkVersion)'
-      inputs:
-        version: '$(dotnetSdkVersion)'
+    - template: scripts/deploy/ui_tests-steps.yml
+      parameters:
+        buildConfiguration: $(buildConfiguration)
+        dotnetSdkVersion: $(dotnetSdkVersion)
 
-    - task: NuGetAuthenticate@0
-
-    - task: DotNetCoreCLI@2
-      displayName: 'Build the project - $(buildConfiguration)'
-      inputs:
-        command: 'build'
-        arguments: '--configuration $(buildConfiguration)'
-        projects: '$(System.DefaultWorkingDirectory)/**/*UITests.csproj'
-
-    - task: DotNetCoreCLI@2
-      displayName: 'Run unit tests - $(buildConfiguration)'
-      inputs:
-        command: 'test'
-        arguments: '--no-build --configuration $(buildConfiguration)'
-        publishTestResults: true
-        projects: '$(System.DefaultWorkingDirectory)/**/*UITests.csproj'
-
+###
+### Staging deployment
+### Note: as a separate job runs load tests.
+###
 - stage: 'Staging'
   displayName: 'Deploy to the staging environment'
   dependsOn: Dev
@@ -183,35 +178,17 @@ stages:
       runOnce:
         deploy:
           steps:
-          - download: current
-            artifact: drop
-          - task: AzureWebApp@1
-            displayName: 'Azure App Service Deploy: website'
-            inputs:
-              azureSubscription: 'Resource Manager - Tailspin - Space Game'
-              appName: '$(WebAppNameStaging)'
-              package: '$(Pipeline.Workspace)/drop/$(buildConfiguration)/*.zip'
+          - template: scripts/deploy/deploy-steps.yml
+            parameters:
+              buildConfiguration: $(buildConfiguration)
+              webAppName: $(WebAppNameStaging)
+
   - job: RunLoadTests
-    dependsOn: Deploy
-    displayName: 'Run load tests'
+    dependsOn: Deploy    
     condition: succeeded()  # run the job only when the previous job succeeds
     pool:
       vmImage: 'ubuntu-18.04'
     variables:
     - group: Release
     steps:
-    - script: |
-        wget -c ftp.ps.pl/pub/apache/jmeter/binaries/apache-jmeter-$(jmeterVersion).tgz
-        tar -xzf apache-jmeter-$(jmeterVersion).tgz
-      displayName: 'Install Apache JMeter'
-    - script: apache-jmeter-$(jmeterVersion)/bin/./jmeter -n -t LoadTest.jmx -o Results.xml -J hostname=$(STAGING_HOSTNAME)
-      displayName: 'Run Load tests'
-    - script: |
-        sudo apt-get update
-        sudo apt-get install xsltproc
-        xsltproc JMeter2JUnit.xsl Results.xml > JUnit.xml
-      displayName: 'Transform JMeter output to JUnit'
-    - task: PublishTestResults@2
-      inputs:
-        testResultsFormat: JUnit
-        testResultsFiles: JUnit.xml      
+    - template: scripts/deploy/load_tests-steps.yml      

@@ -1,0 +1,32 @@
+parameters:
+- name: buildConfiguration
+  displayName: buildConfiguration
+  type: string
+  default: 'Release'
+- name: dotnetSdkVersion
+  displayName: dotnetSdkVersion
+  type: string
+  default: '3.1.300'
+
+steps:
+- task: UseDotNet@2
+  displayName: 'Use .NET Core SDK ${{ parameters.dotnetSdkVersion }}'
+  inputs:
+    version: '${{ parameters.dotnetSdkVersion }}'
+
+- task: NuGetAuthenticate@0
+
+- task: DotNetCoreCLI@2
+  displayName: 'Build the project - ${{ parameters.buildConfiguration }}'
+  inputs:
+    command: 'build'
+    arguments: '--configuration ${{ parameters.buildConfiguration }}'
+    projects: '$(System.DefaultWorkingDirectory)/**/*UITests.csproj'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Run unit tests - ${{ parameters.buildConfiguration }}'
+  inputs:
+    command: 'test'
+    arguments: '--no-build --configuration ${{ parameters.buildConfiguration }}'
+    publishTestResults: true
+    projects: '$(System.DefaultWorkingDirectory)/**/*UITests.csproj'
