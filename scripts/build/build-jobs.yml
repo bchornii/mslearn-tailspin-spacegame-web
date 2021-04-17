@@ -13,7 +13,8 @@ parameters:
   default: 'Release'
   
 jobs:
-- job: "Build UI and dotnet"
+- job: "BuildUiAndNet"
+  displayName: 'Build UI and .Net'
   steps:
   
   - template: steps/build.ui.yml
@@ -30,7 +31,8 @@ jobs:
     displayName: 'Publish Artifacts: drop'
     condition: succeeded() # run the task only when the previous task succeeds
 
-- job: "Build .dacpac"
+- job: "BuildDacpac"
+  displayName: 'Build database project'
   pool:
     vmImage: 'windows-2019'
   steps:
