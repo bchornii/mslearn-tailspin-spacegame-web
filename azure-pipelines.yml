@@ -261,7 +261,6 @@ stages:
         succeeded('DBAVerificationScript'),
         in(dependencies.DBAVerificationApply.result, 'Succeeded', 'Skipped')
       )
-    jobs
   jobs:
   - deployment: Deploy
     pool:
