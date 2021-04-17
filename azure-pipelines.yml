@@ -28,7 +28,7 @@ stages:
     demands:
     - npm
   jobs:
-    template: scripts/jobs/build/build-jobs.yml
+  - template: scripts/jobs/build/build-jobs.yml
 
   # read the dacpac file and create a change script for the database; ps script writes out that change script
 - stage: DBAVerificationScript
