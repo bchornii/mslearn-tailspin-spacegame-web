@@ -6,11 +6,6 @@
 trigger:
 - '*'
 
-pool:
-  vmImage: 'ubuntu-18.04'
-  demands:
-  - npm
-
 variables:
   buildConfiguration: 'Release'
   releaseBranchName: 'release'
@@ -28,93 +23,13 @@ schedules:
 stages:
 - stage: 'Build'
   displayName: 'Build the web application'
+  pool:
+    vmImage: 'ubuntu-18.04'
+    demands:
+    - npm
   jobs:
-    - job: "CI"
-      steps:
-      - task: UseDotNet@2
-        displayName: 'Use .NET Core $(dotnetSdkVersion)'
-        inputs:
-          packageType: sdk
-          version: '$(dotnetSdkVersion)'
-      
-      - task: Npm@1
-        displayName: 'Run npm install'
-        inputs:
-          verbose: false
-      
-      - script: './node_modules/.bin/node-sass $(wwwrootDir) --output $(wwwrootDir)'
-        displayName: 'Compile Sass assets'
-      
-      - task: gulp@1
-        displayName: 'Run gulp tasks'
-      
-      - script: 'echo "$(Build.DefinitionName), $(Build.BuildId), $(Build.BuildNumber)" > buildinfo.txt'
-        displayName: 'Write build info'
-        workingDirectory: $(wwwrootDir)
-      
-      - task: NuGetAuthenticate@0
-  
-      - task: DotNetCoreCLI@2
-        displayName: 'Restore project dependencies'
-        inputs:
-          command: 'restore'
-          projects: '**/*.csproj'
-          feedsToUse: 'config'
-          nugetConfigPath: 'nuget.config'
-      
-      # - template: templates/build.yml
-      #   parameters:
-      #     buildConfiguration: 'Debug'
-      
-      - template: templates/build.yml
-        parameters:
-          buildConfiguration: $(buildConfiguration)
-      
-      # publish the .zip file to Azure Pipelines
-      - task: PublishBuildArtifacts@1
-        displayName: 'Publish Artifacts: drop'
-        condition: succeeded() # run the task only when the previous task succeeds
+    template: scripts/jobs/build/build-jobs.yml
 
-    - job: BuildDacpac
-      pool:
-        vmImage: 'windows-2019'
-      steps:
-      - task: UseDotNet@2
-        displayName: 'Use .NET Core $(dotnetSdkVersion)'
-        inputs:
-          packageType: sdk
-          version: '$(dotnetSdkVersion)'
-
-      - task: NuGetAuthenticate@0
-
-      - task: DotNetCoreCLI@2
-        displayName: 'Restore project dependencies'
-        inputs:
-          command: 'restore'
-          projects: '**/*.csproj'
-          feedsToUse: 'config'
-          nugetConfigPath: 'nuget.config'
-
-      - task: VSBuild@1
-        displayName: 'Build the database project'
-        inputs:
-          project: '**/*.sqlproj'
-          configuration: $(buildConfiguration)
-
-      - task: CopyFiles@2
-        displayName: 'Copy dacpac file to staging directory'
-        inputs:
-          contents: |
-            Tailspin.SpaceGame.Database/bin/$(buildConfiguration)/*.dacpac
-          targetFolder: '$(Build.StagingDirectory)'
-
-      - task: PublishBuildArtifacts@1
-        displayName: 'Publish Artifact'
-        inputs:
-          pathToPublish: '$(Build.ArtifactStagingDirectory)'  # default value
-          artifactName: dropDacpac
-        condition: succeededOrFailed()
-        
   # read the dacpac file and create a change script for the database; ps script writes out that change script
 - stage: DBAVerificationScript
   displayName: 'Script database schema changes'

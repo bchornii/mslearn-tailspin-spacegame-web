@@ -1,0 +1,46 @@
+parameters:
+- name: wwwrootDir
+  displayName: wwwrootDir
+  type: string
+  default: ''
+- name: dotnetSdkVersion
+  displayName: dotnetSdkVersion
+  type: string
+  default: '3.1.300'
+- name: buildConfiguration
+  displayName: buildConfiguration
+  type: string
+  default: 'Release'
+  
+jobs:
+- job: "CI"
+  steps:
+  
+  - template: steps/build.ui.yml
+    parameters:
+      wwwrootDir: ${{ parameters.wwwrootDir }}
+  
+  - template: steps/build.dotnet.yml
+    parameters:
+      buildConfiguration: '${{ parameters.buildConfiguration }}'
+      dotnetSdkVersion: '${{ parameters.dotnetSdkVersion }}'
+  
+  # publish the .zip file to Azure Pipelines
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publish Artifacts: drop'
+    condition: succeeded() # run the task only when the previous task succeeds
+
+- job: BuildDacpac
+  pool:
+    vmImage: 'windows-2019'
+  steps:
+  - template: steps/build.db.yml
+    parameters:
+      buildConfiguration: '${{ parameters.buildConfiguration }}'
+
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publish Artifact'
+    inputs:
+      pathToPublish: '$(Build.ArtifactStagingDirectory)'  # default value
+      artifactName: dropDacpac
+    condition: succeededOrFailed()
