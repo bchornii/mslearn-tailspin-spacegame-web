@@ -29,6 +29,10 @@ stages:
     - npm
   jobs:
   - template: scripts/jobs/build/build-jobs.yml
+    parameters:
+      wwwrootDir: $(wwwrootDir)
+      dotnetSdkVersion: $(dotnetSdkVersion)
+      buildConfiguration: $(buildConfiguration)
 
   # read the dacpac file and create a change script for the database; ps script writes out that change script
 - stage: DBAVerificationScript
