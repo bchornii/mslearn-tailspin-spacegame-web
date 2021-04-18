@@ -1,0 +1,31 @@
+parameters:
+- name: buildConfiguration
+  displayName: buildConfiguration
+  type: string
+  default: 'Release'
+- name: webAppName
+  displayName: webAppName
+  type: string
+  default: 'none'
+- name: resourceGroupName
+  displayName: resourceGroupName
+  type: string
+  default: 'none'
+- name: slotName
+  displayName: slotName
+  type: string
+  default: 'none'
+
+steps:
+- download: current
+  artifact: drop
+
+- task: AzureWebApp@1
+  displayName: 'Azure App Service Deploy: ${{ parameters.webAppName }}'
+  inputs:
+    azureSubscription: 'Resource Manager - Tailspin - Space Game'
+    deployToSlotOrASE: 'true'                                   # when set to true, deploys to an existing deployment slot
+    resourceGroupName: ${{ parameters.resourceGroupName }}      # value is required when deployToSlotOrASE is true
+    slotName: ${{ parameters.slotName }}                        # name of the deployment slot
+    appName: '${{ parameters.webAppName }}'
+    package: '$(Pipeline.Workspace)/drop/${{ parameters.buildConfiguration }}/*.zip'

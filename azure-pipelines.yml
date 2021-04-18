@@ -177,28 +177,12 @@ stages:
       runOnce:
         deploy:
           steps:
-          - download: current
-            artifact: drop
-
-          - task: AzureWebApp@1
-            displayName: 'Azure App Service Deploy: website'
-            inputs:
-              azureSubscription: 'Resource Manager - Tailspin - Space Game'
-              deployToSlotOrASE: 'true'                   # when set to true, deploys to an existing deployment slot
-              resourceGroupName: $(resourceGroupName)     # value is required when deployToSlotOrASE is true
-              slotName: $(stagingSlotName)                # name of the deployment slot
-              appName: '$(WebAppNameStaging)'
-              package: '$(Pipeline.Workspace)/drop/$(buildConfiguration)/*.zip'
-
-          - task: AzureAppServiceManage@0                 # swaps the deployment slots
-            displayName: 'Swap deployment slots'
-            inputs:
-              azureSubscription: 'Resource Manager - Tailspin - Space Game'
-              resourceGroupName: $(resourceGroupName)
+          - template: scripts/deploy/deploy-into-slot-steps.yml
+            parameters:
+              buildConfiguration: $(buildConfiguration)              
+              slotName: $(stagingSlotName)
               webAppName: '$(WebAppNameStaging)'
-              sourceSlot: $(stagingSlotName)
-              targetSlot: $(prodSlotName)
-              action: 'Swap Slots'
+              resourceGroupName: $(resourceGroupName) 
 
   - job: RunLoadTests
     displayName: 'Run Load Tests Job'
@@ -209,4 +193,32 @@ stages:
     variables:
     - group: Release
     steps:
-    - template: scripts/deploy/load_tests-steps.yml      
+    - template: scripts/deploy/load_tests-steps.yml
+
+###
+### Swap slots - i.e. deploy into prod
+###
+- stage: 'Prod'
+  displayName: 'Deploy to the prod environment'
+  dependsOn: Staging
+  jobs:
+  - deployment: Deploy
+    displayName: 'Deploy into Production Job'
+    pool:
+      vmImage: 'ubuntu-18.04'
+    environment: prod
+    variables:
+    - group: 'Release'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: AzureAppServiceManage@0                 # swaps the deployment slots
+            displayName: 'Swap deployment slots: stage and prod'
+            inputs:
+              azureSubscription: 'Resource Manager - Tailspin - Space Game'
+              resourceGroupName: $(resourceGroupName)
+              webAppName: '$(WebAppNameStaging)'
+              sourceSlot: $(stagingSlotName)
+              targetSlot: $(prodSlotName)
+              action: 'Swap Slots'
