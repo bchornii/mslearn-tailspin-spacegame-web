@@ -177,10 +177,28 @@ stages:
       runOnce:
         deploy:
           steps:
-          - template: scripts/deploy/deploy-steps.yml
-            parameters:
-              buildConfiguration: $(buildConfiguration)
-              webAppName: $(WebAppNameStaging)
+          - download: current
+            artifact: drop
+
+          - task: AzureWebApp@1
+            displayName: 'Azure App Service Deploy: website'
+            inputs:
+              azureSubscription: 'Resource Manager - Tailspin - Space Game'
+              deployToSlotOrASE: 'true'                   # when set to true, deploys to an existing deployment slot
+              resourceGroupName: $(resourceGroupName)     # value is required when deployToSlotOrASE is true
+              slotName: $(stagingSlotName)                # name of the deployment slot
+              appName: '$(WebAppNameStaging)'
+              package: '$(Pipeline.Workspace)/drop/$(buildConfiguration)/*.zip'
+
+          - task: AzureAppServiceManage@0                 # swaps the deployment slots
+            displayName: 'Swap deployment slots'
+            inputs:
+              azureSubscription: 'Resource Manager - Tailspin - Space Game'
+              resourceGroupName: $(resourceGroupName)
+              webAppName: '$(WebAppNameStaging)'
+              sourceSlot: $(stagingSlotName)
+              targetSlot: $(prodSlotName)
+              action: 'Swap Slots'
 
   - job: RunLoadTests
     displayName: 'Run Load Tests Job'
