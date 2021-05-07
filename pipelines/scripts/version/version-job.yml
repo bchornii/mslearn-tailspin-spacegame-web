@@ -1,0 +1,31 @@
+parameters:
+- name: pathToGitVersion
+  displayName: pathToGitVersion
+  type: string
+  default: 'GitVersion.yml'
+- name: useConfigFile
+  displayName: useConfigFile
+  type: boolean
+  default: false
+
+jobs:
+- job: "Semver"
+  displayName: "Semantic version calculation"
+  steps:
+    - task: gitversion/setup@0
+      displayName: Install GitVersion
+      inputs:
+        versionSpec: '5.x'
+
+    - task: gitversion/execute@0
+      displayName: Display GitVersion config
+      inputs:
+        additionalArguments: '/showConfig'
+        useConfigFile: ${{ parameters.useConfigFile }}
+        configFilePath: '${{ parameters.pathToGitVersion }}'
+
+    - task: gitversion/execute@0
+      displayName: Determine Version
+      inputs:
+        useConfigFile: ${{ parameters.useConfigFile }}
+        configFilePath: '${{ parameters.pathToGitVersion }}'
