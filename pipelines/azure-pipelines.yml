@@ -2,12 +2,18 @@
 trigger:
 - '*'
 
+###
+### Global variables
+###
 variables:
   buildConfiguration: 'Release'
   releaseBranchName: 'release'
   wwwrootDir: 'Tailspin.SpaceGame.Web/wwwroot'
   dotnetSdkVersion: '3.1.300' 
 
+###
+### Run job at 3AM each day if any changes in source code
+###
 schedules:
 - cron: '0 3 * * *'
   displayName: Deploy every day at 3 A.M.
