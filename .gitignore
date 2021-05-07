@@ -31,6 +31,9 @@ bld/
 # Uncomment if you have tasks that create the project's static files in wwwroot
 #wwwroot/
 
+# Sonar scan results
+.sonarqube/
+
 # Visual Studio 2017 auto generated files
 Generated\ Files/
 
