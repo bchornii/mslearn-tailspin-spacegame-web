@@ -34,20 +34,20 @@ stages:
         displayName: Install GitVersion
         inputs:
           versionSpec: '5.x'
-      
+
       - task: gitversion/execute@0
         displayName: Display GitVersion config
         inputs:
           additionalArguments: '/showConfig'
           useConfigFile: true
-          configFilePath: 'GitVersion.yml'
-      
+          configFilePath: 'pipelines/GitVersion.yml'
+
       - task: gitversion/execute@0
         displayName: Determine Version
         inputs:
           useConfigFile: true
           configFilePath: 'GitVersion.yml'
-          
+
   - template: scripts/build/build-jobs.yml
     parameters:
       wwwrootDir: $(wwwrootDir)
