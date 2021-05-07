@@ -46,7 +46,7 @@ stages:
         displayName: Determine Version
         inputs:
           useConfigFile: true
-          configFilePath: 'GitVersion.yml'
+          configFilePath: 'pipelines/GitVersion.yml'
 
   - template: scripts/build/build-jobs.yml
     parameters:
