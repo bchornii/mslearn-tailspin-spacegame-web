@@ -29,6 +29,9 @@ jobs:
   # publish the .zip file to Azure Pipelines
   - task: PublishBuildArtifacts@1
     displayName: 'Publish Artifacts: drop'
+    inputs:
+      pathToPublish: '$(Build.ArtifactStagingDirectory)'  # default value
+      artifactName: drop                                  # default value
     condition: succeeded() # run the task only when the previous task succeeds
 
 - job: "BuildDacpac"
