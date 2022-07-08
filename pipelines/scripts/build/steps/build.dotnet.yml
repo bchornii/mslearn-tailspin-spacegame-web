@@ -16,6 +16,13 @@ steps:
     version: '${{ parameters.dotnetSdkVersion }}'
 
 - task: NuGetAuthenticate@0
+
+# Prepare Analysis Configuration task
+- task: SonarQubePrepare@5
+  inputs:
+    SonarQube: 'SpaceGameWeb'
+    scannerMode: 'MSBuild'
+    projectKey: 'sqp_bda9756d68733136f31f5f915b56d6c413ce993b'
   
 - task: DotNetCoreCLI@2
   displayName: 'Restore project dependencies'
@@ -35,6 +42,14 @@ steps:
 - template: test.dotnet.yml
   parameters:
     buildConfiguration: '${{ parameters.buildConfiguration }}'
+
+# Run Code Analysis task
+- task: SonarQubeAnalyze@5
+
+# Publish Quality Gate Result task
+- task: SonarQubePublish@5
+  inputs:
+    pollingTimeoutSec: '300'
 
 # publish, or package, the app's build results (including its dependencies) into a folder. 
 # zipAfterPublish argument specifies to add the built results to a .zip file.
