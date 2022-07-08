@@ -17,10 +17,10 @@ jobs:
   displayName: 'Build UI and .Net'
   steps:
   
-  #- template: steps/build.ui.yml
-  #  parameters:
-  #    wwwrootDir: ${{ parameters.wwwrootDir }}
-  #
+  - template: steps/build.ui.yml
+    parameters:
+      wwwrootDir: ${{ parameters.wwwrootDir }}
+  
   - template: steps/build.dotnet.yml
     parameters:
       buildConfiguration: '${{ parameters.buildConfiguration }}'
@@ -34,18 +34,18 @@ jobs:
       artifactName: drop                                  # default value
     condition: succeeded() # run the task only when the previous task succeeds
 
-#- job: "BuildDacpac"
-#  displayName: 'Build database project'
-#  pool:
-#    vmImage: 'windows-2019'
-#  steps:
-#  - template: steps/build.db.yml
-#    parameters:
-#      buildConfiguration: '${{ parameters.buildConfiguration }}'
-#
-#  - task: PublishBuildArtifacts@1
-#    displayName: 'Publish Artifact'
-#    inputs:
-#      pathToPublish: '$(Build.ArtifactStagingDirectory)'  # default value
-#      artifactName: dropDacpac
-#    condition: succeededOrFailed()
+- job: "BuildDacpac"
+  displayName: 'Build database project'
+  pool:
+    vmImage: 'windows-2019'
+  steps:
+  - template: steps/build.db.yml
+    parameters:
+      buildConfiguration: '${{ parameters.buildConfiguration }}'
+
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publish Artifact'
+    inputs:
+      pathToPublish: '$(Build.ArtifactStagingDirectory)'  # default value
+      artifactName: dropDacpac
+    condition: succeededOrFailed()

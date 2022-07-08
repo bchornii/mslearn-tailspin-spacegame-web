@@ -33,10 +33,10 @@ stages:
     demands:
     - npm
   jobs:
-  #- template: scripts/version/version-job.yml
-  #  parameters:
-  #    pathToGitVersion: 'pipelines/GitVersion.yml'
-  #    useConfigFile: true
+  - template: scripts/version/version-job.yml
+    parameters:
+      pathToGitVersion: 'pipelines/GitVersion.yml'
+      useConfigFile: true
 
   - template: scripts/build/build-jobs.yml
     parameters:
@@ -48,188 +48,187 @@ stages:
 ### Dba Verification Stage
 ### Note: reads the .dacpac file and create a change script for the database; ps script writes it to output
 ###
-#- stage: DBAVerificationScript
-#  displayName: 'Script database schema changes'
-#  dependsOn: Build
-#  #condition: |  # run the stage only when the previous stage succeeds and the current branch is release
-#  # and
-#  # (
-#  #   succeeded(),
-#  #   eq(variables['Build.SourceBranchName'], variables['releaseBranchName'])
-#  # )
-#  jobs:
-#  - deployment: DBAVerificationScript
-#    displayName: 'DBA Verification Script Job'
-#    pool:
-#      vmImage: 'windows-2019'
-#    variables:
-#    - group: 'Release'
-#    environment: 'dbaverificationscript'
-#    strategy:
-#      runOnce:
-#        deploy:
-#          steps:
-#          - template: scripts/db/dba_verify-steps.yml
-#            parameters:
-#              buildConfiguration: $(buildConfiguration)
-
+- stage: DBAVerificationScript
+  displayName: 'Script database schema changes'
+  dependsOn: Build
+  #condition: |  # run the stage only when the previous stage succeeds and the current branch is release
+  # and
+  # (
+  #   succeeded(),
+  #   eq(variables['Build.SourceBranchName'], variables['releaseBranchName'])
+  # )
+  jobs:
+  - deployment: DBAVerificationScript
+    displayName: 'DBA Verification Script Job'
+    pool:
+      vmImage: 'windows-2019'
+    variables:
+    - group: 'Release'
+    environment: 'dbaverificationscript'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - template: scripts/db/dba_verify-steps.yml
+            parameters:
+              buildConfiguration: $(buildConfiguration)
 ###
 ### Dba Verification Apply Stage
 ### Note: reads the auto-generated file and applies the change script to the database.
 ###
-#- stage: DBAVerificationApply
-#  variables:
-#    - group: 'Release'
-#  displayName: 'Apply database schema changes'
-#  dependsOn: DBAVerificationScript
-#  condition: and(succeeded('DBAVerificationScript'), eq(variables['schemaChanged'], True))
-#  jobs:
-#  - deployment: DBAVerificationApply
-#    displayName: 'DBA Verification Apply Job'
-#    pool:
-#      vmImage: 'windows-2019'
-#    variables:
-#    - group: 'Release'
-#    environment: 'dbaverificationapply'
-#    strategy:
-#      runOnce:
-#        deploy:
-#          steps:
-#          - template: scripts/db/dba_apply-steps.yml
-#            parameters:
-#              buildConfiguration: $(buildConfiguration)
+- stage: DBAVerificationApply
+  variables:
+    - group: 'Release'
+  displayName: 'Apply database schema changes'
+  dependsOn: DBAVerificationScript
+  condition: and(succeeded('DBAVerificationScript'), eq(variables['schemaChanged'], True))
+  jobs:
+  - deployment: DBAVerificationApply
+    displayName: 'DBA Verification Apply Job'
+    pool:
+      vmImage: 'windows-2019'
+    variables:
+    - group: 'Release'
+    environment: 'dbaverificationapply'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - template: scripts/db/dba_apply-steps.yml
+            parameters:
+              buildConfiguration: $(buildConfiguration)
 
 ###
 ### Dev deployment
 ###
-#- stage: 'Dev'
-#  displayName: 'Deploy the web application'
-#  dependsOn:
-#  - DBAVerificationScript
-#  - DBAVerificationApply
-#  condition: |
-#    and
-#    (
-#      succeeded('DBAVerificationScript'),
-#      in(dependencies.DBAVerificationApply.result, 'Succeeded', 'Skipped')
-#    )
-#  jobs:
-#  - deployment: Deploy
-#    displayName: 'Deploy into Dev Job'
-#    pool:
-#      vmImage: 'ubuntu-18.04'
-#    environment: dev
-#    variables:
-#    - group: Release
-#    strategy:
-#      runOnce:
-#        deploy:
-#          steps:
-#          - template: scripts/deploy/deploy-steps.yml
-#            parameters:
-#              buildConfiguration: $(buildConfiguration)
-#              webAppName: $(WebAppNameDev)
+- stage: 'Dev'
+  displayName: 'Deploy the web application'
+  dependsOn:
+  - DBAVerificationScript
+  - DBAVerificationApply
+  condition: |
+    and
+    (
+      succeeded('DBAVerificationScript'),
+      in(dependencies.DBAVerificationApply.result, 'Succeeded', 'Skipped')
+    )
+  jobs:
+  - deployment: Deploy
+    displayName: 'Deploy into Dev Job'
+    pool:
+      vmImage: 'ubuntu-18.04'
+    environment: dev
+    variables:
+    - group: Release
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - template: scripts/deploy/deploy-steps.yml
+            parameters:
+              buildConfiguration: $(buildConfiguration)
+              webAppName: $(WebAppNameDev)
 
 ###
 ### Test deployment
 ### Note: add separate job runs UI tests.
 ###
-#- stage: 'Test'
-#  displayName: 'Deploy to the test environment'
-#  dependsOn: Dev
-#  condition: eq(variables['Build.Reason'], 'Schedule')
-#  jobs:
-#  - deployment: Deploy
-#    displayName: 'Deploy into Test'
-#    pool:
-#      vmImage: 'ubuntu-18.04'
-#    environment: test
-#    variables:
-#    - group: 'Release'
-#    strategy:
-#      runOnce:
-#        deploy:
-#          steps:
-#          - template: scripts/deploy/deploy-steps.yml
-#            parameters:
-#              buildConfiguration: $(buildConfiguration)
-#              webAppName: $(WebAppNameTest)
-#
-#  - job: RunUITests
-#    displayName: 'Run UI Tests Job'
-#    dependsOn: Deploy
-#    condition: succeeded()  # run the job only when the previous job succeeds    
-#    pool:
-#      vmImage: 'windows-2019'
-#    variables:
-#    - group: 'Release'
-#    steps: 
-#    - template: scripts/deploy/ui_tests-steps.yml
-#      parameters:
-#        buildConfiguration: $(buildConfiguration)
-#        dotnetSdkVersion: $(dotnetSdkVersion)
+- stage: 'Test'
+  displayName: 'Deploy to the test environment'
+  dependsOn: Dev
+  condition: eq(variables['Build.Reason'], 'Schedule')
+  jobs:
+  - deployment: Deploy
+    displayName: 'Deploy into Test'
+    pool:
+      vmImage: 'ubuntu-18.04'
+    environment: test
+    variables:
+    - group: 'Release'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - template: scripts/deploy/deploy-steps.yml
+            parameters:
+              buildConfiguration: $(buildConfiguration)
+              webAppName: $(WebAppNameTest)
+
+  - job: RunUITests
+    displayName: 'Run UI Tests Job'
+    dependsOn: Deploy
+    condition: succeeded()  # run the job only when the previous job succeeds    
+    pool:
+      vmImage: 'windows-2019'
+    variables:
+    - group: 'Release'
+    steps: 
+    - template: scripts/deploy/ui_tests-steps.yml
+      parameters:
+        buildConfiguration: $(buildConfiguration)
+        dotnetSdkVersion: $(dotnetSdkVersion)
 
 ###
 ### Staging deployment
 ### Note: as a separate job runs load tests.
 ###
-#- stage: 'Staging'
-#  displayName: 'Deploy to the staging environment'
-#  dependsOn: Dev
-#  jobs:
-#  - deployment: Deploy
-#    displayName: 'Deploy into Staging Job'
-#    pool:
-#      vmImage: 'ubuntu-18.04'
-#    environment: staging
-#    variables:
-#    - group: 'Release'
-#    strategy:
-#      runOnce:
-#        deploy:
-#          steps:
-#          - template: scripts/deploy/deploy-into-slot-steps.yml
-#            parameters:
-#              buildConfiguration: $(buildConfiguration)              
-#              slotName: $(stagingSlotName)
-#              webAppName: '$(WebAppNameStaging)'
-#              resourceGroupName: $(resourceGroupName) 
-#
-#  - job: RunLoadTests
-#    displayName: 'Run Load Tests Job'
-#    dependsOn: Deploy    
-#    condition: succeeded()  # run the job only when the previous job succeeds
-#    pool:
-#      vmImage: 'ubuntu-18.04'
-#    variables:
-#    - group: Release
-#    steps:
-#    - template: scripts/deploy/load_tests-steps.yml
+- stage: 'Staging'
+  displayName: 'Deploy to the staging environment'
+  dependsOn: Dev
+  jobs:
+  - deployment: Deploy
+    displayName: 'Deploy into Staging Job'
+    pool:
+      vmImage: 'ubuntu-18.04'
+    environment: staging
+    variables:
+    - group: 'Release'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - template: scripts/deploy/deploy-into-slot-steps.yml
+            parameters:
+              buildConfiguration: $(buildConfiguration)              
+              slotName: $(stagingSlotName)
+              webAppName: '$(WebAppNameStaging)'
+              resourceGroupName: $(resourceGroupName) 
+
+  - job: RunLoadTests
+    displayName: 'Run Load Tests Job'
+    dependsOn: Deploy    
+    condition: succeeded()  # run the job only when the previous job succeeds
+    pool:
+      vmImage: 'ubuntu-18.04'
+    variables:
+    - group: Release
+    steps:
+    - template: scripts/deploy/load_tests-steps.yml
 
 ###
 ### Swap slots - i.e. deploy into prod
 ###
-#- stage: 'Prod'
-#  displayName: 'Deploy to the prod environment'
-#  dependsOn: Staging
-#  jobs:
-#  - deployment: Deploy
-#    displayName: 'Deploy into Production Job'
-#    pool:
-#      vmImage: 'ubuntu-18.04'
-#    environment: prod
-#    variables:
-#    - group: 'Release'
-#    strategy:
-#      runOnce:
-#        deploy:
-#          steps:
-#          - task: AzureAppServiceManage@0                 # swaps the deployment slots
-#            displayName: 'Swap deployment slots: stage and prod'
-#            inputs:
-#              azureSubscription: 'Resource Manager - Tailspin - Space Game'
-#              resourceGroupName: $(resourceGroupName)
-#              webAppName: '$(WebAppNameStaging)'
-#              sourceSlot: $(stagingSlotName)
-#              targetSlot: $(prodSlotName)
-#              action: 'Swap Slots'
+- stage: 'Prod'
+  displayName: 'Deploy to the prod environment'
+  dependsOn: Staging
+  jobs:
+  - deployment: Deploy
+    displayName: 'Deploy into Production Job'
+    pool:
+      vmImage: 'ubuntu-18.04'
+    environment: prod
+    variables:
+    - group: 'Release'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: AzureAppServiceManage@0                 # swaps the deployment slots
+            displayName: 'Swap deployment slots: stage and prod'
+            inputs:
+              azureSubscription: 'Resource Manager - Tailspin - Space Game'
+              resourceGroupName: $(resourceGroupName)
+              webAppName: '$(WebAppNameStaging)'
+              sourceSlot: $(stagingSlotName)
+              targetSlot: $(prodSlotName)
+              action: 'Swap Slots'
