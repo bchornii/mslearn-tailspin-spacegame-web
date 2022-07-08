@@ -17,10 +17,10 @@ jobs:
   displayName: 'Build UI and .Net'
   steps:
   
-  - template: steps/build.ui.yml
-    parameters:
-      wwwrootDir: ${{ parameters.wwwrootDir }}
-  
+  #- template: steps/build.ui.yml
+  #  parameters:
+  #    wwwrootDir: ${{ parameters.wwwrootDir }}
+  #
   - template: steps/build.dotnet.yml
     parameters:
       buildConfiguration: '${{ parameters.buildConfiguration }}'
