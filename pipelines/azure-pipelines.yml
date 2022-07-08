@@ -33,10 +33,10 @@ stages:
     demands:
     - npm
   jobs:
-  - template: scripts/version/version-job.yml
-    parameters:
-      pathToGitVersion: 'pipelines/GitVersion.yml'
-      useConfigFile: true
+  #- template: scripts/version/version-job.yml
+  #  parameters:
+  #    pathToGitVersion: 'pipelines/GitVersion.yml'
+  #    useConfigFile: true
 
   - template: scripts/build/build-jobs.yml
     parameters:
